@@ -7,7 +7,7 @@ func NewOpenWeatherProvider() *OpenWeatherProvider {
 	return &OpenWeatherProvider{}
 }
 
-func (o *OpenWeatherProvider) GetWarmestDay(lat, long float64) (string, error) {
+func (o *OpenWeatherProvider) GetWarmestDay(lat, long float64) (WeatherResponse, error) {
 	// TODO: Implement
-	return "not implemented", nil
+	return WeatherResponse{}, nil
 }
