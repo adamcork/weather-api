@@ -59,6 +59,46 @@ func TestLatTooManyDP(t *testing.T) {
 	assert.JSONEq(t, expected, w.Body.String())
 }
 
+func TestLongTooManyDP(t *testing.T) {
+	// Not expecting call to weather provider - check decimal places in handler.
+	// If implemented in weather provider, would have to be re-implemented in all providers.
+	m := &mockWeatherProvider{
+		resp: weatherprovider.WeatherResponse{},
+		err:  nil,
+	}
+
+	router := setupRouter(m)
+
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "/weather?long=123.4567895&lat=234.567215", nil)
+	router.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusBadRequest, w.Code)
+
+	expected := `{"warmest-day": "", "temperature": {"value": 0, "scale": ""}, "errors": ["long parameter has too many decimal places."]}`
+	assert.JSONEq(t, expected, w.Body.String())
+}
+
+func TestBothTooManyDP(t *testing.T) {
+	// Not expecting call to weather provider - check decimal places in handler.
+	// If implemented in weather provider, would have to be re-implemented in all providers.
+	m := &mockWeatherProvider{
+		resp: weatherprovider.WeatherResponse{},
+		err:  nil,
+	}
+
+	router := setupRouter(m)
+
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "/weather?long=123.4567895&lat=234.56721564", nil)
+	router.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusBadRequest, w.Code)
+
+	expected := `{"warmest-day": "", "temperature": {"value": 0, "scale": ""}, "errors": ["lat parameter has too many decimal places.","long parameter has too many decimal places."]}`
+	assert.JSONEq(t, expected, w.Body.String())
+}
+
 type mockWeatherProvider struct {
 	resp weatherprovider.WeatherResponse
 	err  error

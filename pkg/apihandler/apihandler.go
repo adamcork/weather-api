@@ -43,6 +43,13 @@ func (h *APIHandler) Weather(c *gin.Context) {
 	regex := regexp.MustCompile(pattern)
 	if !regex.MatchString(lt) {
 		errs = append(errs, "lat parameter has too many decimal places.")
+	}
+
+	if !regex.MatchString(lg) {
+		errs = append(errs, "long parameter has too many decimal places.")
+	}
+
+	if len(errs) > 0 {
 		resp := WeatherResponse{
 			Errors: errs,
 		}
