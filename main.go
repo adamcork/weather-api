@@ -1,7 +1,8 @@
 package main
 
 import (
-	handler "github.com/adamcork/weather-api/pkg/api-handler"
+	"github.com/adamcork/weather-api/pkg/apihandler"
+	"github.com/adamcork/weather-api/pkg/weatherprovider"
 	"github.com/gin-gonic/gin"
 )
 
@@ -15,6 +16,7 @@ func main() {
 }
 
 func setup(router *gin.Engine) {
-	h := handler.NewAPIHandler()
+	p := weatherprovider.NewOpenWeatherProvider()
+	h := apihandler.NewAPIHandler(p)
 	router.GET("/weather", h.Weather)
 }
