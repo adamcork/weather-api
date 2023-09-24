@@ -40,6 +40,24 @@ func (h *APIHandler) Weather(c *gin.Context) {
 	lt := c.Query("lat")
 	lg := c.Query("long")
 
+	lat, err := strconv.ParseFloat(lt, 32)
+	if err != nil {
+		errs = append(errs, "lat parameter could not be parsed as a float.")
+	}
+
+	long, err := strconv.ParseFloat(lg, 32)
+	if err != nil {
+		errs = append(errs, "long parameter could not be parsed as a float.")
+	}
+
+	if len(errs) > 0 {
+		resp := WeatherResponse{
+			Errors: errs,
+		}
+		c.JSON(http.StatusBadRequest, resp)
+		return
+	}
+
 	pattern := `^[-+]?[0-9]*\.?[0-9]{0,6}$`
 	regex := regexp.MustCompile(pattern)
 	if !regex.MatchString(lt) {
@@ -57,9 +75,6 @@ func (h *APIHandler) Weather(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, resp)
 		return
 	}
-
-	lat, _ := strconv.ParseFloat(lt, 32)
-	long, _ := strconv.ParseFloat(lg, 32)
 
 	isUK, _ := h.provider.CheckUKLocation(lat, long)
 	if !isUK {

@@ -103,6 +103,26 @@ func TestBothTooManyDP(t *testing.T) {
 	assert.JSONEq(t, expected, w.Body.String())
 }
 
+func TestLongNonNumeric(t *testing.T) {
+	// Not expecting call to weather provider - check decimal places in handler.
+	// If implemented in weather provider, would have to be re-implemented in all providers.
+	m := &mockWeatherProvider{
+		resp:      weatherprovider.WeatherResponse{},
+		wamestErr: nil,
+	}
+
+	router := setupRouter(m)
+
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "/weather?long=fail&lat=234.567215", nil)
+	router.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusBadRequest, w.Code)
+
+	expected := `{"warmest-day": "", "temperature": {"value": 0, "scale": ""}, "errors": ["long parameter could not be parsed as a float."]}`
+	assert.JSONEq(t, expected, w.Body.String())
+}
+
 func TestOutsideUK(t *testing.T) {
 	m := &mockWeatherProvider{
 		isUK: false,
