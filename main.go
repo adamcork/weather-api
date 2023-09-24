@@ -16,7 +16,8 @@ func main() {
 }
 
 func setup(router *gin.Engine) {
-	p := weatherprovider.NewOpenWeatherProvider()
+	// TODO: add config
+	p := weatherprovider.NewOpenWeatherProvider("", "")
 	h := apihandler.NewAPIHandler(p)
 	router.GET("/weather", h.Weather)
 }
