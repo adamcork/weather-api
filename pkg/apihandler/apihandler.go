@@ -11,6 +11,7 @@ import (
 
 type WeatherProvider interface {
 	GetWarmestDay(lat, long float64) (weatherprovider.WeatherResponse, error)
+	CheckUKLocation(lat, long float64) (bool, error)
 }
 
 type APIHandler struct {
@@ -60,7 +61,25 @@ func (h *APIHandler) Weather(c *gin.Context) {
 	lat, _ := strconv.ParseFloat(lt, 32)
 	long, _ := strconv.ParseFloat(lg, 32)
 
-	providerResp, _ := h.provider.GetWarmestDay(lat, long)
+	isUK, _ := h.provider.CheckUKLocation(lat, long)
+	if !isUK {
+		errs = append(errs, "Only UK locations are permitted.")
+		resp := WeatherResponse{
+			Errors: errs,
+		}
+		c.JSON(http.StatusBadRequest, resp)
+		return
+	}
+
+	providerResp, err := h.provider.GetWarmestDay(lat, long)
+	if err != nil {
+		errs = append(errs, err.Error())
+		resp := WeatherResponse{
+			Errors: errs,
+		}
+		c.JSON(http.StatusInternalServerError, resp)
+		return
+	}
 
 	resp := WeatherResponse{
 		WarmestDay: providerResp.WarmestDay,

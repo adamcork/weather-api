@@ -1,6 +1,8 @@
 package apihandler
 
 import (
+	"errors"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -24,7 +26,8 @@ func TestGetWeather(t *testing.T) {
 			Temperature: 15.3,
 			Scale:       "Celcius",
 		},
-		err: nil,
+		wamestErr: nil,
+		isUK:      true,
 	}
 
 	router := setupRouter(m)
@@ -43,8 +46,8 @@ func TestLatTooManyDP(t *testing.T) {
 	// Not expecting call to weather provider - check decimal places in handler.
 	// If implemented in weather provider, would have to be re-implemented in all providers.
 	m := &mockWeatherProvider{
-		resp: weatherprovider.WeatherResponse{},
-		err:  nil,
+		resp:      weatherprovider.WeatherResponse{},
+		wamestErr: nil,
 	}
 
 	router := setupRouter(m)
@@ -63,8 +66,8 @@ func TestLongTooManyDP(t *testing.T) {
 	// Not expecting call to weather provider - check decimal places in handler.
 	// If implemented in weather provider, would have to be re-implemented in all providers.
 	m := &mockWeatherProvider{
-		resp: weatherprovider.WeatherResponse{},
-		err:  nil,
+		resp:      weatherprovider.WeatherResponse{},
+		wamestErr: nil,
 	}
 
 	router := setupRouter(m)
@@ -83,8 +86,9 @@ func TestBothTooManyDP(t *testing.T) {
 	// Not expecting call to weather provider - check decimal places in handler.
 	// If implemented in weather provider, would have to be re-implemented in all providers.
 	m := &mockWeatherProvider{
-		resp: weatherprovider.WeatherResponse{},
-		err:  nil,
+		resp:      weatherprovider.WeatherResponse{},
+		wamestErr: nil,
+		isUK:      true,
 	}
 
 	router := setupRouter(m)
@@ -99,11 +103,54 @@ func TestBothTooManyDP(t *testing.T) {
 	assert.JSONEq(t, expected, w.Body.String())
 }
 
+func TestOutsideUK(t *testing.T) {
+	m := &mockWeatherProvider{
+		isUK: false,
+	}
+
+	router := setupRouter(m)
+
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "/weather?long=123.456&lat=234.567", nil)
+	router.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusBadRequest, w.Code)
+
+	expected := `{"warmest-day": "", "temperature": {"value": 0, "scale": ""}, "errors": ["Only UK locations are permitted."]}`
+	assert.JSONEq(t, expected, w.Body.String())
+}
+
+func TestWeatherResponseError(t *testing.T) {
+	e := "Error from weather provider."
+	m := &mockWeatherProvider{
+		resp:      weatherprovider.WeatherResponse{},
+		wamestErr: errors.New(e),
+		isUK:      true,
+	}
+
+	router := setupRouter(m)
+
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "/weather?long=123.456&lat=234.567", nil)
+	router.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusInternalServerError, w.Code)
+
+	expected := fmt.Sprintf(`{"warmest-day": "", "temperature": {"value": 0, "scale": ""}, "errors": ["%s"]}`, e)
+	assert.JSONEq(t, expected, w.Body.String())
+}
+
 type mockWeatherProvider struct {
-	resp weatherprovider.WeatherResponse
-	err  error
+	resp         weatherprovider.WeatherResponse
+	wamestErr    error
+	isUK         bool
+	uKCheckError error
 }
 
 func (m *mockWeatherProvider) GetWarmestDay(lat, long float64) (weatherprovider.WeatherResponse, error) {
-	return m.resp, m.err
+	return m.resp, m.wamestErr
+}
+
+func (m *mockWeatherProvider) CheckUKLocation(lat, long float64) (bool, error) {
+	return m.isUK, m.uKCheckError
 }

@@ -11,3 +11,8 @@ func (o *OpenWeatherProvider) GetWarmestDay(lat, long float64) (WeatherResponse,
 	// TODO: Implement
 	return WeatherResponse{}, nil
 }
+
+func (o *OpenWeatherProvider) CheckUKLocation(lat, long float64) (bool, error) {
+	// TODO: Implement
+	return true, nil
+}
