@@ -7,14 +7,15 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/adamcork/weather-api/pkg/history"
 	"github.com/adamcork/weather-api/pkg/weatherprovider"
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
 )
 
-func setupRouter(m *mockWeatherProvider) *gin.Engine {
+func setupRouter(m *mockWeatherProvider, hs *mockHistoryService) *gin.Engine {
 	r := gin.Default()
-	sut := NewAPIHandler(m)
+	sut := NewAPIHandler(m, hs)
 	r.GET("/weather", sut.Weather)
 	return r
 }
@@ -30,7 +31,7 @@ func TestGetWeather(t *testing.T) {
 		isUK:      true,
 	}
 
-	router := setupRouter(m)
+	router := setupRouter(m, &mockHistoryService{})
 
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/weather?long=123.456&lat=234.567", nil)
@@ -50,7 +51,7 @@ func TestLatTooManyDP(t *testing.T) {
 		wamestErr: nil,
 	}
 
-	router := setupRouter(m)
+	router := setupRouter(m, &mockHistoryService{})
 
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/weather?long=123.456&lat=234.5672154", nil)
@@ -70,7 +71,7 @@ func TestLongTooManyDP(t *testing.T) {
 		wamestErr: nil,
 	}
 
-	router := setupRouter(m)
+	router := setupRouter(m, &mockHistoryService{})
 
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/weather?long=123.4567895&lat=234.567215", nil)
@@ -91,7 +92,7 @@ func TestBothTooManyDP(t *testing.T) {
 		isUK:      true,
 	}
 
-	router := setupRouter(m)
+	router := setupRouter(m, &mockHistoryService{})
 
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/weather?long=123.4567895&lat=234.56721564", nil)
@@ -111,7 +112,7 @@ func TestLongNonNumeric(t *testing.T) {
 		wamestErr: nil,
 	}
 
-	router := setupRouter(m)
+	router := setupRouter(m, &mockHistoryService{})
 
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/weather?long=fail&lat=234.567215", nil)
@@ -128,7 +129,7 @@ func TestOutsideUK(t *testing.T) {
 		isUK: false,
 	}
 
-	router := setupRouter(m)
+	router := setupRouter(m, &mockHistoryService{})
 
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/weather?long=123.456&lat=234.567", nil)
@@ -148,7 +149,7 @@ func TestWeatherResponseError(t *testing.T) {
 		isUK:      true,
 	}
 
-	router := setupRouter(m)
+	router := setupRouter(m, &mockHistoryService{})
 
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/weather?long=123.456&lat=234.567", nil)
@@ -173,4 +174,17 @@ func (m *mockWeatherProvider) GetWarmestDay(lat, long float64) (weatherprovider.
 
 func (m *mockWeatherProvider) CheckUKLocation(lat, long float64) (bool, error) {
 	return m.isUK, m.uKCheckError
+}
+
+type mockHistoryService struct {
+}
+
+func (h *mockHistoryService) SaveRequest(history.WeatherRequest) error {
+	// TODO: Implement save weather request tests
+	return nil
+}
+
+func (h *mockHistoryService) GetHistory(orderBy string, limit int) ([]history.WeatherRequest, error) {
+	// TODO: Implement gethistory handler tests
+	return nil, nil
 }

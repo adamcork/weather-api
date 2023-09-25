@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/adamcork/weather-api/pkg/apihandler"
+	"github.com/adamcork/weather-api/pkg/history"
 	"github.com/adamcork/weather-api/pkg/weatherprovider"
 	"github.com/gin-gonic/gin"
 )
@@ -18,6 +19,8 @@ func main() {
 func setup(router *gin.Engine) {
 	// TODO: add config
 	p := weatherprovider.NewOpenWeatherProvider("http://api.openweathermap.org", "apiKey")
-	h := apihandler.NewAPIHandler(p)
+	hs := history.NewFSHistoryService()
+	h := apihandler.NewAPIHandler(p, hs)
 	router.GET("/weather", h.Weather)
+	// TODO: Add endpoint to map history handler
 }

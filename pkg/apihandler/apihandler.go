@@ -5,6 +5,7 @@ import (
 	"regexp"
 	"strconv"
 
+	"github.com/adamcork/weather-api/pkg/history"
 	"github.com/adamcork/weather-api/pkg/weatherprovider"
 	"github.com/gin-gonic/gin"
 )
@@ -15,11 +16,13 @@ type WeatherProvider interface {
 }
 
 type HistoryService interface {
-	SaveRequest(lat, long float64)
+	SaveRequest(history.WeatherRequest) error
+	GetHistory(orderBy string, limit int) ([]history.WeatherRequest, error)
 }
 
 type APIHandler struct {
 	provider WeatherProvider
+	history  HistoryService
 }
 
 type WeatherResponse struct {
@@ -33,9 +36,10 @@ type Temperature struct {
 	Scale string  `json:"scale"` // Celcius, Farenheit (Kelvin???)
 }
 
-func NewAPIHandler(provider WeatherProvider) *APIHandler {
+func NewAPIHandler(provider WeatherProvider, history HistoryService) *APIHandler {
 	return &APIHandler{
 		provider: provider,
+		history:  history,
 	}
 }
 
@@ -110,3 +114,5 @@ func (h *APIHandler) Weather(c *gin.Context) {
 
 	c.JSON(http.StatusOK, resp)
 }
+
+// TODO: Add handler for retrieval of history

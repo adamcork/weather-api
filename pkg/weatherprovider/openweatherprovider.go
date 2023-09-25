@@ -23,6 +23,7 @@ func NewOpenWeatherProvider(baseUrl, apiKey string) *OpenWeatherProvider {
 }
 
 func (o *OpenWeatherProvider) GetWarmestDay(lat, long float64) (WeatherResponse, error) {
+	log.Printf("Check warmest day called, lat: %v, long: %v", lat, long)
 	values := url.Values{}
 	values.Add("lon", fmt.Sprintf("%v", long))
 	values.Add("lat", fmt.Sprintf("%v", lat))
@@ -78,6 +79,7 @@ func parseWarmestDay(r OpenWeatherDataResponse) WeatherResponse {
 }
 
 func (o *OpenWeatherProvider) CheckUKLocation(lat, long float64) (bool, error) {
+	log.Printf("Location check called, lat: %v, long: %v", lat, long)
 	values := url.Values{}
 	values.Add("lon", fmt.Sprintf("%v", long))
 	values.Add("lat", fmt.Sprintf("%v", lat))
@@ -107,8 +109,6 @@ func (o *OpenWeatherProvider) CheckUKLocation(lat, long float64) (bool, error) {
 	if len(geoResp) == 0 {
 		return false, nil
 	}
-
-	log.Printf("%+v\n", geoResp)
 
 	return geoResp[0].Country == "GB", nil
 }
