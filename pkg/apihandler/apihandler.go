@@ -14,6 +14,10 @@ type WeatherProvider interface {
 	CheckUKLocation(lat, long float64) (bool, error)
 }
 
+type HistoryService interface {
+	SaveRequest(lat, long float64)
+}
+
 type APIHandler struct {
 	provider WeatherProvider
 }
